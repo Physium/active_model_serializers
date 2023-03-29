@@ -66,10 +66,11 @@ end
             ArraySerializer
           end
         else
-          klass_name = build_serializer_class(resource, options)
-          Serializer.serializers_cache.fetch_or_store(klass_name) do
-            _const_get(klass_name)
-          end
+          # klass_name = build_serializer_class(resource, options)
+          # Serializer.serializers_cache.fetch_or_store(klass_name) do
+          #   _const_get(klass_name)
+          # end
+          options.fetch(:serializer) { get_serializer_for(resource.class) }
         end
       end
 
@@ -123,6 +124,31 @@ end
           klass_name << "#{options[:namespace]}::" if options[:namespace]
           klass_name << options[:prefix].to_s.classify if options[:prefix]
           klass_name << "#{resource.class.name}Serializer"
+        end
+      end
+
+      def serializer_lookup_chain_for(klass)
+        chain = []
+
+        resource_class_name = klass.name.demodulize
+        resource_namespace = klass.name.deconstantize
+        serializer_class_name = "#{resource_class_name}Serializer"
+
+        chain.push("#{name}::#{serializer_class_name}") if self != ActiveModel::Serializer
+        chain.push("#{resource_namespace}::#{serializer_class_name}")
+
+        chain
+      end
+
+      def get_serializer_for(klass)
+        serializers_cache.fetch_or_store(klass) do
+          serializer_class = serializer_lookup_chain_for(klass).map(&:safe_constantize).find { |x| x && x < ActiveModel::Serializer }
+
+          if serializer_class
+            serializer_class
+          elsif klass.superclass
+            get_serializer_for(klass.superclass)
+          end
         end
       end
 
