@@ -66,11 +66,7 @@ end
             ArraySerializer
           end
         else
-          # klass_name = build_serializer_class(resource, options)
-          # Serializer.serializers_cache.fetch_or_store(klass_name) do
-          #   _const_get(klass_name)
-          # end
-          options.fetch(:serializer) { get_serializer_for(resource.class) }
+          get_serializer_for(resource.class)
         end
       end
 
