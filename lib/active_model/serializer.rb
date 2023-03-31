@@ -132,6 +132,7 @@ end
 
         chain.push("#{name}::#{serializer_class_name}") if self != ActiveModel::Serializer
         chain.push("#{resource_namespace}::#{serializer_class_name}")
+        chain.push(serializer_class_name)
 
         chain
       end
